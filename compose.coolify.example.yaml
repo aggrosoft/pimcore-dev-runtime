@@ -241,6 +241,8 @@ services:
       SERVICE_FQDN_NGINX: null
     expose:
       - "80"
+    labels:
+      - 'coolify.traefik.middlewares=authentik-forward-auth@file'
     volumes:
       - pimcore_workspace:/var/www:ro
     command:
