@@ -225,6 +225,8 @@ if is_pimcore_installed; then
     printf '%s\n' '==> Pimcore core already installed'
 else
     : "${PIMCORE_PRODUCT_KEY:?PIMCORE_PRODUCT_KEY is required for the initial Pimcore installation}"
+    : "${PIMCORE_INSTANCE_IDENTIFIER:?PIMCORE_INSTANCE_IDENTIFIER is required for the initial Pimcore installation}"
+    : "${PIMCORE_ENCRYPTION_SECRET:?PIMCORE_ENCRYPTION_SECRET is required for the initial Pimcore installation}"
 
     printf '%s\n' '==> Installing Pimcore core into fresh database'
 
