@@ -75,6 +75,8 @@ jobs:
               id developer
               php -v
               composer --version
+              node --version
+              npm --version
               chromium --version
               test -x /opt/aggro/setup.sh
               test -x /usr/local/bin/pimcore-dev-link-bundles

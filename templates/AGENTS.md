@@ -14,12 +14,11 @@ You may edit and extend it for this development instance.
 - Git configuration: `/var/www/.gitconfig`.
 - GitHub App runtime data: `/var/www/.config/aggro-github`.
 - Run Pimcore CLI commands from `/var/www/html`, for example `bin/console ...`.
-- PHP, Composer, MariaDB, Redis, RabbitMQ, OpenSearch, Mercure and Chromium are already available.
+- PHP, Composer, Node.js/npm, MariaDB, Redis, RabbitMQ, OpenSearch, Mercure and Chromium are available in the environment.
 - Do not create a parallel Docker environment unless explicitly requested.
 
 ## Repositories
 
-- `/var/www` and `/var/www/html` are not the normal bundle development repositories.
 - `/var/www/html` is the host application repository (`aggrosoft/pimcore-app` by default).
 - Each directory below `/var/www/bundles` is an independent Git repository.
 - The host application's `vendor/aggrosoft/*` entries for development bundles are symlinks to the matching repositories below `/var/www/bundles`.
@@ -34,17 +33,17 @@ You may edit and extend it for this development instance.
 - The host application owns the runtime dependency graph used by the running Pimcore instance.
 - After a host `composer install` or `composer update`, run `pimcore-dev-link-bundles` so the editable bundle checkouts are linked back into `vendor/aggrosoft`.
 - Bundle repositories are libraries and have their own development dependencies.
-- Before running a bundle's quality checks, ensure its local development dependencies exist. From the bundle repository run `pimcore-dev-bundle-deps`.
-- `pimcore-dev-bundle-deps` installs the bundle's development dependencies and removes a generated `composer.lock` again when that repository does not track one.
+- Before running a bundle's PHP quality checks, run `pimcore-dev-bundle-deps` from the bundle repository.
+- The helper installs the bundle's development dependencies and removes a generated `composer.lock` again when that repository does not track one.
 - Do not add or upgrade dependencies unless the task requires it.
-- If a bundle runtime dependency changes, make sure the host application's dependency graph is updated as necessary; a bundle-local `vendor/` directory does not change what the running Pimcore application loads.
+- If a bundle runtime dependency changes, update the host application's dependency graph when necessary; a bundle-local `vendor/` directory does not change what the running Pimcore application loads.
 
 ## Implementation
 
-- Follow Pimcore 2026.x and Symfony conventions and use supported APIs.
+- Follow the installed Pimcore 2026.x and Symfony conventions and use supported APIs.
 - Prefer Pimcore's intended extension points over core hacks, direct database manipulation or custom framework abstractions.
 - Keep solutions as small and maintainable as practical. Do not add architecture for hypothetical future needs.
-- Determine the installed versions from the running application when relevant.
+- Determine installed versions from the running application when relevant.
 - Do not add unnecessary backwards compatibility for unsupported Pimcore versions.
 - If requirements are ambiguous, inspect the existing implementation and neighboring bundles first.
 
@@ -56,6 +55,7 @@ You may edit and extend it for this development instance.
 - Keep containers, cards, tabs, forms, tables, loading states, empty states, notifications and action placement consistent with Pimcore Studio.
 - Avoid bespoke layout systems and unnecessary custom styling.
 - User-facing labels should describe domain concepts, not internal implementation details.
+- If a bundle contains an `assets/package.json`, use its existing npm scripts. For the current data bundle this means installing with `npm ci`, running type/tests, building, and packaging the Studio build when relevant.
 
 ## External integrations
 
@@ -76,15 +76,16 @@ You may edit and extend it for this development instance.
 ## Validation
 
 - Do not stop after editing code.
-- Run the affected bundle's existing quality checks. Usually:
+- Run the affected bundle's existing PHP quality checks. Usually:
   - `pimcore-dev-bundle-deps`
   - `composer quality`
+- For bundles with frontend assets, install the locked npm dependencies and run the relevant type checks, tests and production/package build.
 - Run targeted tests first, then the full relevant quality suite where practical.
 - Test the change through the running Pimcore application when it affects runtime behavior, data projection, commands, migrations, object classes or Studio UI.
 - Apply relevant Doctrine migrations and idempotent object-model installers when the change requires them.
 - After Composer changes in the host application, relink bundles with `pimcore-dev-link-bundles`.
 - For Studio/UI changes, verify the real page in the running application.
-- Chromium is available for headless smoke checks, for example `chromium --headless --no-sandbox --dump-dom <url>`, but use a more suitable browser workflow when available.
+- Chromium is available for browser smoke checks. Use the most suitable browser workflow available; a basic fallback is `chromium --headless --no-sandbox --dump-dom <url>`.
 - Before declaring the task complete, state which tests, builds, commands and integration checks were run and whether they passed.
 - If something could not be tested, state exactly what and why.
 

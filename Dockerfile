@@ -12,7 +12,10 @@ RUN set -eux; \
         ca-certificates \
         chromium \
         curl \
+        mariadb-client \
         netcat-openbsd \
+        nodejs \
+        npm \
         sudo \
     ; \
     rm -rf /var/lib/apt/lists/*; \
