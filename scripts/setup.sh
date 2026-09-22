@@ -182,7 +182,7 @@ install_bundle() {
     run_console pimcore:bundle:install "$bundle" --no-interaction
 }
 
-printf '%s\\n' '==> Initializing development workspace'
+printf '%s\n' '==> Initializing development workspace'
 
 : "${PIMCORE_DB_PASSWORD:?PIMCORE_DB_PASSWORD is required}"
 : "${PIMCORE_OPENSEARCH_PASSWORD:?PIMCORE_OPENSEARCH_PASSWORD is required}"
