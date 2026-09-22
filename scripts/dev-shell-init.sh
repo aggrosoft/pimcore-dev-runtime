@@ -99,7 +99,7 @@ if [[ -n ${GITHUB_APP_CLIENT_ID:-} \
         "$github_dir/private-key.pem"
 
     runuser -u developer -- env HOME=/var/www \
-        git config --global credential.helper ''
+        git config --global --unset-all credential.helper 2>/dev/null || true
 
     runuser -u developer -- env HOME=/var/www \
         git config --global --add \
