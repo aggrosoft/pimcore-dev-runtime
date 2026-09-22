@@ -1,0 +1,258 @@
+x-pimcore-environment: &pimcore-environment
+  APP_ENV: dev
+  APP_DEBUG: "1"
+  PIMCORE_DEV_MODE: "true"
+  PIMCORE_APP_BUNDLES: "1"
+
+  APPLICATION_SECRET: ${SERVICE_BASE64_64_APP}
+  DATABASE_URL: mysql://pimcore:${SERVICE_PASSWORD_64_DB}@db:3306/pimcore
+
+  PIMCORE_PUBLIC_URL: ${SERVICE_URL_NGINX_80}
+  PIMCORE_ADMIN_USER: ${PIMCORE_ADMIN_USER:-admin}
+  PIMCORE_ADMIN_PASSWORD: ${SERVICE_PASSWORD_ADMIN}
+
+  PIMCORE_PRODUCT_KEY: ${PIMCORE_PRODUCT_KEY:-}
+  PIMCORE_INSTANCE_IDENTIFIER: ${PIMCORE_INSTANCE_IDENTIFIER:-}
+  PIMCORE_ENCRYPTION_SECRET: ${PIMCORE_ENCRYPTION_SECRET:-}
+
+  PIMCORE_OPENSEARCH_DSN: opensearch://admin:${SERVICE_PASSWORD_64_OPENSEARCH}@opensearch:9200?ssl=true&ssl_verify=false
+  PIMCORE_MESSENGER_TRANSPORT_DSN_PREFIX: amqp://pimcore:${SERVICE_PASSWORD_64_RABBITMQ}@rabbitmq:5672/%2f/
+
+  MERCURE_JWT_KEY: ${SERVICE_BASE64_64_MERCURE}
+  MERCURE_URL: ${SERVICE_URL_NGINX_80}/hub
+  MERCURE_SERVER_URL: http://mercure/.well-known/mercure
+
+  TRUSTED_PROXIES: REMOTE_ADDR
+
+  WAREXO_BASE_URL: ${WAREXO_BASE_URL:-}
+  WAREXO_USERNAME: ${WAREXO_USERNAME:-}
+  WAREXO_PASSWORD: ${WAREXO_PASSWORD:-}
+  WAREXO_CLIENT_ID: ${WAREXO_CLIENT_ID:-}
+
+  SHOPWARE_BASE_URL: ${SHOPWARE_BASE_URL:-}
+  SHOPWARE_CLIENT_ID: ${SHOPWARE_CLIENT_ID:-}
+  SHOPWARE_CLIENT_SECRET: ${SHOPWARE_CLIENT_SECRET:-}
+
+  SHIRTNETWORK_USERNAME: ${SHIRTNETWORK_USERNAME:-}
+  SHIRTNETWORK_PASSWORD: ${SHIRTNETWORK_PASSWORD:-}
+  SHIRTNETWORK_SKU_SCHEME: ${SHIRTNETWORK_SKU_SCHEME:-}
+
+  NORTY_HUB_URL: ${NORTY_HUB_URL:-}
+  NORTY_HUB_USER: ${NORTY_HUB_USER:-}
+  NORTY_HUB_PASS: ${NORTY_HUB_PASS:-}
+
+  BEECHFIELD_HUB_URL: ${BEECHFIELD_HUB_URL:-}
+  BEECHFIELD_HUB_USER: ${BEECHFIELD_HUB_USER:-}
+  BEECHFIELD_HUB_PASS: ${BEECHFIELD_HUB_PASS:-}
+
+  MEDIA_AI_OPENAI_API_KEY: ${MEDIA_AI_OPENAI_API_KEY:-}
+
+  S3_ENDPOINT: ${S3_ENDPOINT:-}
+  S3_REGION: ${S3_REGION:-}
+  S3_BUCKET: ${S3_BUCKET:-}
+  S3_STORAGE_KEY: ${S3_STORAGE_KEY:-}
+  S3_STORAGE_SECRET: ${S3_STORAGE_SECRET:-}
+  S3_ASSET_URL: ${S3_ASSET_URL:-}
+  S3_THUMBNAIL_URL: ${S3_THUMBNAIL_URL:-}
+
+x-dev-environment: &dev-environment
+  PIMCORE_APP_REPOSITORY: ${PIMCORE_APP_REPOSITORY:-aggrosoft/pimcore-app}
+  DEV_BUNDLES: ${DEV_BUNDLES:-}
+
+  GITHUB_APP_CLIENT_ID: ${GITHUB_APP_CLIENT_ID:-}
+  GITHUB_APP_INSTALLATION_ID: ${GITHUB_APP_INSTALLATION_ID:-}
+  GITHUB_APP_PRIVATE_KEY: ${GITHUB_APP_PRIVATE_KEY:-}
+
+  GIT_USER_NAME: ${GIT_USER_NAME:-Aggrosoft Dev Server}
+  GIT_USER_EMAIL: ${GIT_USER_EMAIL:-dev-server@aggrosoft.de}
+
+services:
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - volatile-lru
+      - --save
+      - ""
+
+  rabbitmq:
+    image: rabbitmq:alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: pimcore
+      RABBITMQ_DEFAULT_PASS: ${SERVICE_PASSWORD_64_RABBITMQ}
+    volumes:
+      - pimcore_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - -q
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    command:
+      - mysqld
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_520_ci
+      - --innodb-file-per-table=1
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SERVICE_PASSWORD_64_DBROOT}
+      MYSQL_DATABASE: pimcore
+      MYSQL_USER: pimcore
+      MYSQL_PASSWORD: ${SERVICE_PASSWORD_64_DB}
+    volumes:
+      - pimcore_database:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysql -h db -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE -e 'SELECT 1;'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 1m
+
+  opensearch:
+    image: opensearchproject/opensearch:2
+    restart: unless-stopped
+    environment:
+      cluster.name: pimcore
+      node.name: pimcore-opensearch
+      discovery.type: single-node
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms1024m -Xmx1024m
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${SERVICE_PASSWORD_64_OPENSEARCH}
+      action.auto_create_index: "false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - pimcore_opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -k -f
+          -u admin:$${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+          https://localhost:9200/_cluster/health
+          >/dev/null
+          || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: :80
+      MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_BASE64_64_MERCURE}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${SERVICE_BASE64_64_MERCURE}
+      MERCURE_EXTRA_DIRECTIVES: anonymous
+
+  setup:
+    image: ghcr.io/aggrosoft/pimcore-dev-runtime:main
+    pull_policy: always
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      mercure:
+        condition: service_started
+    environment:
+      <<: [*pimcore-environment, *dev-environment]
+    volumes:
+      - pimcore_workspace:/var/www
+      - pimcore_data:/var/data
+    command:
+      - /opt/aggro/setup.sh
+
+  php:
+    image: ghcr.io/aggrosoft/pimcore-dev-runtime:main
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    environment:
+      <<: [*pimcore-environment, *dev-environment]
+      SHELL: /bin/bash
+    volumes:
+      - pimcore_workspace:/var/www
+      - pimcore_data:/var/data
+    labels:
+      - 'sshpiper.username=${SERVICE_FQDN_NGINX}'
+      - 'sshpiper.container_username=developer'
+      - 'sshpiper.port=22'
+      - 'sshpiper.network=${COMPOSE_PROJECT_NAME}'
+      - 'sshpiper.authorized_keys=${SSH_AUTHORIZED_KEYS_B64:-}'
+      - 'sshpiper.docker_exec_cmd=${SSH_AUTHORIZED_KEYS_B64:+true}'
+      - 'sshpiper.docker_sshd_cmd=/bin/bash'
+
+  supervisord:
+    image: pimcore/pimcore:php8.5-supervisord-5.x
+    restart: unless-stopped
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    environment:
+      <<: *pimcore-environment
+      SHELL: /bin/bash
+    volumes:
+      - pimcore_workspace:/var/www
+      - pimcore_data:/var/data
+    command:
+      - /bin/sh
+      - -lc
+      - >-
+        cp /var/www/html/.docker/supervisord.conf /etc/supervisor/conf.d/pimcore.conf
+        && exec /usr/bin/supervisord
+
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      php:
+        condition: service_started
+    environment:
+      SERVICE_URL_NGINX_80: /
+      SERVICE_FQDN_NGINX: null
+    expose:
+      - "80"
+    volumes:
+      - pimcore_workspace:/var/www:ro
+    command:
+      - /bin/sh
+      - -lc
+      - >-
+        cp /var/www/html/.docker/nginx.conf /etc/nginx/conf.d/default.conf
+        && exec nginx -g 'daemon off;'
+
+volumes:
+  pimcore_workspace:
+  pimcore_data:
+  pimcore_database:
+  pimcore_rabbitmq:
+  pimcore_opensearch:

@@ -1,0 +1,6 @@
+aggrosoft/pimcore-data-bundle
+aggrosoft/pimcore-catalog-sources-bundle
+aggrosoft/pimcore-shirtnetwork-bundle
+aggrosoft/pimcore-shopware-bundle
+aggrosoft/pimcore-warexo-bundle
+aggrosoft/pimcore-agent-bundle
