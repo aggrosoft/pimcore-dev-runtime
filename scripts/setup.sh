@@ -205,7 +205,10 @@ install -d -o developer -g www-data -m 0775 \
 
 chmod -R g+rwX "$app_dir/var" "$app_dir/public/var"
 
+pimcore_was_installed=0
+
 if is_pimcore_installed; then
+    pimcore_was_installed=1
     printf '%s\n' '==> Pimcore core already installed'
 else
     : "${PIMCORE_PRODUCT_KEY:?PIMCORE_PRODUCT_KEY is required for the initial Pimcore installation}"
@@ -219,16 +222,18 @@ else
         run_dev env \
             PIMCORE_APP_BUNDLES=0 \
             vendor/bin/pimcore-install \
-            --install-profile='App\Installer\SkeletonProfile' \
+            --install-profile='App\\Installer\\SkeletonProfile' \
             --no-interaction
     )
 fi
 
-printf '%s\n' '==> Warming development container'
-run_console cache:warmup
-
-printf '%s\n' '==> Running Doctrine migrations'
-run_console doctrine:migrations:migrate --no-interaction
+if (( pimcore_was_installed )); then
+    printf '%s\n' '==> Checking legacy bundle installer state'
+    (
+        cd "$app_dir"
+        run_dev php /opt/aggro/repair-bundle-installers.php
+    )
+fi
 
 printf '%s\n' '==> Installing application bundles'
 install_bundle PimcoreDataHubBundle
@@ -239,7 +244,7 @@ install_bundle AggrosoftPimcoreShopwareBundle
 install_bundle AggrosoftPimcoreShirtnetworkBundle
 install_bundle AggrosoftPimcoreAgentBundle
 
-printf '%s\n' '==> Running remaining migrations'
+printf '%s\n' '==> Running Doctrine migrations'
 run_console doctrine:migrations:migrate --no-interaction
 
 printf '%s\n' '==> Applying idempotent application model upgrades'
