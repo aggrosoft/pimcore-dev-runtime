@@ -18,16 +18,26 @@ if [[ -d /var/data ]]; then
 fi
 
 agent_file=/var/www/.aggro-dev/AGENTS.md
+agent_local_file=/var/www/.aggro-dev/AGENTS.local.md
+agent_link=/var/www/AGENTS.md
 
-if [[ ! -e "$agent_file" ]]; then
-    install -o developer -g www-data -m 0664 \
-        /opt/aggro/templates/AGENTS.md \
-        "$agent_file"
+# AGENTS.md is runtime-managed and refreshed on every container start so
+# development instructions stay in sync with the runtime implementation.
+install -o developer -g www-data -m 0664 \
+    /opt/aggro/templates/AGENTS.md \
+    "$agent_file"
+
+# Local instance-specific additions survive runtime updates.
+if [[ ! -e "$agent_local_file" ]]; then
+    install -o developer -g www-data -m 0664 /dev/null "$agent_local_file"
 fi
 
-if [[ ! -e /var/www/AGENTS.md && ! -L /var/www/AGENTS.md ]]; then
-    ln -s "$agent_file" /var/www/AGENTS.md
+# Keep the workspace-level entry point deterministic even if an older instance
+# created a regular file or a stale symlink here.
+if [[ -e "$agent_link" || -L "$agent_link" ]]; then
+    rm -f "$agent_link"
 fi
+ln -s "$agent_file" "$agent_link"
 
 if [[ -d /var/data && ! -e /var/www/data && ! -L /var/www/data ]]; then
     ln -s /var/data /var/www/data

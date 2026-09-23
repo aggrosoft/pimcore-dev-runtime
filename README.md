@@ -10,7 +10,10 @@ The result is a persistent remote Pimcore instance that can be opened directly t
 
 ```text
 /var/www/
-├── AGENTS.md
+├── AGENTS.md                     # runtime-managed symlink
+├── .aggro-dev/
+│   ├── AGENTS.md                 # refreshed from the runtime on every start
+│   └── AGENTS.local.md           # persistent optional local additions
 ├── html/                         # aggrosoft/pimcore-app
 ├── bundles/
 │   ├── pimcore-data-bundle/
@@ -23,6 +26,18 @@ The result is a persistent remote Pimcore instance that can be opened directly t
 ```
 
 The workspace, database, OpenSearch data, RabbitMQ data and `/var/data` are backed by named volumes and survive normal container recreation.
+
+### Agent instructions
+
+`/var/www/AGENTS.md` is a symlink to the runtime-managed `/var/www/.aggro-dev/AGENTS.md`. The managed file is refreshed on every container start so changes in the runtime's development workflow reach existing instances after a redeploy.
+
+Persistent instance-specific instructions belong in:
+
+```text
+/var/www/.aggro-dev/AGENTS.local.md
+```
+
+That file is created once and never overwritten by the runtime. The managed AGENTS file tells coding agents to read it in addition when it contains local instructions.
 
 ## Runtime image
 
