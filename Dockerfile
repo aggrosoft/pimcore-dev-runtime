@@ -32,8 +32,11 @@ RUN set -eux; \
 COPY --chmod=0755 scripts/ /opt/aggro/
 COPY templates/ /opt/aggro/templates/
 
-RUN ln -s /opt/aggro/link-bundles.sh /usr/local/bin/pimcore-dev-link-bundles \
-    && ln -s /opt/aggro/bundle-deps.sh /usr/local/bin/pimcore-dev-bundle-deps
+RUN mv /usr/local/bin/composer /usr/local/bin/composer-real \
+    && ln -s /opt/aggro/composer-wrapper.sh /usr/local/bin/composer \
+    && ln -s /opt/aggro/link-bundles.sh /usr/local/bin/pimcore-dev-link-bundles \
+    && ln -s /opt/aggro/bundle-deps.sh /usr/local/bin/pimcore-dev-bundle-deps \
+    && ln -s /opt/aggro/sync-app-composer.sh /usr/local/bin/pimcore-dev-sync-composer
 
 ENV HOME=/var/www
 

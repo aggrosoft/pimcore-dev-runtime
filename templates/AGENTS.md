@@ -30,13 +30,17 @@ You may edit and extend it for this development instance.
 
 ## Composer
 
-- The host application owns the runtime dependency graph used by the running Pimcore instance.
-- After a host `composer install` or `composer update`, run `pimcore-dev-link-bundles` so the editable bundle checkouts are linked back into `vendor/aggrosoft`.
-- Bundle repositories are libraries and have their own development dependencies.
-- Before running a bundle's PHP quality checks, run `pimcore-dev-bundle-deps` from the bundle repository.
-- The helper installs the bundle's development dependencies and removes a generated `composer.lock` again when that repository does not track one.
+- The committed `/var/www/html/composer.json` and `composer.lock` remain the production/source dependency definition and are not rewritten by the dev runtime.
+- The runtime generates untracked `composer.dev.json` and `composer.dev.lock` files beside them. They use `/var/www/bundles/*` as a Composer `path` repository with forced symlinks.
+- Local bundle packages are exposed to Composer as `dev-main` regardless of the currently checked-out feature branch, so branch work remains compatible with the host application's existing `dev-main` requirements.
+- Running plain `composer` from `/var/www/html` automatically uses the generated development Composer files. Composer therefore installs the editable bundle repositories as native path-repository symlinks under `vendor/aggrosoft`.
+- Running `composer` from an individual directory below `/var/www/bundles` continues to use that bundle's own `composer.json`.
+- The runtime automatically refreshes the development Composer lock when the source app Composer files or any local bundle `composer.json` changes. You can force the same synchronization with `pimcore-dev-sync-composer --install`.
+- `pimcore-dev-link-bundles` remains as a compatibility alias, but manual vendor symlinking is no longer the normal workflow.
+- If a task intentionally changes the committed host application's dependency definition, edit the source `composer.json` and use `composer-real` explicitly for the production/source Composer operation. Then run `pimcore-dev-sync-composer --install` to refresh the development overlay.
+- Bundle repositories are libraries and have their own development dependencies. Before running a bundle's PHP quality checks, run `pimcore-dev-bundle-deps` from the bundle repository.
+- The bundle dependency helper installs that bundle's `require-dev` packages and removes a generated `composer.lock` again when the repository does not track one.
 - Do not add or upgrade dependencies unless the task requires it.
-- If a bundle runtime dependency changes, update the host application's dependency graph when necessary; a bundle-local `vendor/` directory does not change what the running Pimcore application loads.
 
 ## Implementation
 
@@ -83,7 +87,7 @@ You may edit and extend it for this development instance.
 - Run targeted tests first, then the full relevant quality suite where practical.
 - Test the change through the running Pimcore application when it affects runtime behavior, data projection, commands, migrations, object classes or Studio UI.
 - Apply relevant Doctrine migrations and idempotent object-model installers when the change requires them.
-- After Composer changes in the host application, relink bundles with `pimcore-dev-link-bundles`.
+- After Composer metadata changes in the host application or a bundle, make sure the development overlay is synchronized with `pimcore-dev-sync-composer --install` if the automatic wrapper has not already done so.
 - For Studio/UI changes, verify the real page in the running application.
 - Chromium is available for browser smoke checks. Use the most suitable browser workflow available; a basic fallback is `chromium --headless --no-sandbox --dump-dom <url>`.
 - Before declaring the task complete, state which tests, builds, commands and integration checks were run and whether they passed.

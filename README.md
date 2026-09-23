@@ -2,7 +2,7 @@
 
 Remote development environment for Aggrosoft Pimcore bundles.
 
-The runtime uses the real `aggrosoft/pimcore-app` repository as the host application and checks development bundles out separately below `/var/www/bundles`. The host application's Composer-installed Aggrosoft packages are replaced with symlinks to those editable checkouts.
+The runtime uses the real `aggrosoft/pimcore-app` repository as the host application and checks development bundles out separately below `/var/www/bundles`. A generated development Composer overlay registers those bundles as native Composer `path` repositories, so Composer itself installs them as symlinks into the host application's `vendor/aggrosoft` tree.
 
 The result is a persistent remote Pimcore instance that can be opened directly through VS Code Remote SSH and used for PHP, integration and Pimcore Studio development.
 
@@ -102,13 +102,43 @@ aggrosoft/pimcore-agent-bundle
 
 `DEV_BUNDLES` can override that list using one `owner/repo` per line.
 
-After a host application `composer install` or `composer update`, restore the editable links with:
+### Composer path repositories
 
-```bash
-pimcore-dev-link-bundles
+The committed host application files stay untouched:
+
+```text
+/var/www/html/composer.json
+/var/www/html/composer.lock
 ```
 
-Bundle PHP development dependencies are installed only when needed. From the bundle repository:
+The runtime generates:
+
+```text
+/var/www/html/composer.dev.json
+/var/www/html/composer.dev.lock
+```
+
+The generated Composer file replaces the local Aggrosoft GitHub VCS repositories with a path repository pointing at:
+
+```text
+/var/www/bundles/*
+```
+
+Path packages force symlinking, use stable config-based lock references, and are exposed as `dev-main` even when a bundle checkout is currently on a feature branch.
+
+Inside `/var/www/html`, the normal `composer` command automatically uses `composer.dev.json`. Inside an individual bundle repository, normal Composer behavior is unchanged.
+
+Manual bundle linking is no longer required. To explicitly regenerate the development overlay and reinstall the host dependencies:
+
+```bash
+pimcore-dev-sync-composer --install
+```
+
+`pimcore-dev-link-bundles` remains available as a backwards-compatible alias.
+
+If the committed host application's dependency definition itself must change, use `composer-real` intentionally against the source `composer.json`/`composer.lock`, then refresh the development overlay.
+
+Bundle PHP development dependencies remain separate. From a bundle repository:
 
 ```bash
 pimcore-dev-bundle-deps

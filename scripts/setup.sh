@@ -15,32 +15,6 @@ run_dev() {
         "$@"
 }
 
-composer_auth() {
-    if [[ ! -s /var/www/.config/aggro-github/client-id ]]; then
-        return 0
-    fi
-
-    local token
-    token="$(/opt/aggro/github-app-credential.sh --token)"
-
-    php -r '
-        echo json_encode([
-            "github-oauth" => ["github.com" => $argv[1]],
-        ], JSON_UNESCAPED_SLASHES);
-    ' "$token"
-}
-
-run_composer() {
-    local auth
-    auth="$(composer_auth)"
-
-    if [[ -n "$auth" ]]; then
-        run_dev env COMPOSER_AUTH="$auth" composer "$@"
-    else
-        run_dev composer "$@"
-    fi
-}
-
 bundle_list() {
     if [[ -n ${DEV_BUNDLES:-} ]]; then
         printf '%s\n' "$DEV_BUNDLES" | tr ',' '\n'
@@ -220,25 +194,10 @@ while IFS= read -r raw_repo || [[ -n "$raw_repo" ]]; do
 
     repo="$(normalize_repo "$raw_repo")"
     clone_repo "$repo" "$bundles_dir/${repo##*/}"
-
-    run_composer config --global \
-        "repositories.${repo##*/}" \
-        vcs \
-        "https://github.com/$repo.git"
 done < <(bundle_list)
 
-printf '%s\n' '==> Installing Pimcore application dependencies'
-run_composer --working-dir="$app_dir" install \
-    --no-interaction \
-    --prefer-dist \
-    --no-scripts
-
-printf '%s\n' '==> Linking editable development bundles'
-/opt/aggro/link-bundles.sh
-
-run_composer --working-dir="$app_dir" dump-autoload \
-    --no-interaction \
-    --no-scripts
+printf '%s\n' '==> Preparing Composer path repositories for local bundles'
+run_dev /opt/aggro/sync-app-composer.sh --install
 
 install -d -o developer -g www-data -m 0775 \
     "$app_dir/var" \

@@ -26,7 +26,11 @@ jobs:
           bash -n scripts/github-app-credential.sh
           bash -n scripts/link-bundles.sh
           bash -n scripts/bundle-deps.sh
+          bash -n scripts/sync-app-composer.sh
+          bash -n scripts/composer-wrapper.sh
           bash -n scripts/setup.sh
+          php -l scripts/generate-dev-composer.php
+          php tests/generate-dev-composer-test.php
 
   build:
     needs: validate
@@ -75,10 +79,12 @@ jobs:
               id developer
               php -v
               composer --version
+              composer-real --version
               node --version
               npm --version
               chromium --version
               test -x /opt/aggro/setup.sh
               test -x /usr/local/bin/pimcore-dev-link-bundles
               test -x /usr/local/bin/pimcore-dev-bundle-deps
+              test -x /usr/local/bin/pimcore-dev-sync-composer
             '
