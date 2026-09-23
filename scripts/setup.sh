@@ -222,7 +222,7 @@ else
         run_dev env \
             PIMCORE_APP_BUNDLES=0 \
             vendor/bin/pimcore-install \
-            --install-profile='App\\Installer\\SkeletonProfile' \
+            --install-profile='App\Installer\SkeletonProfile' \
             --no-interaction
     )
 fi
