@@ -64,6 +64,8 @@ Use `compose.coolify.example.yaml` as the Coolify Compose template.
 
 It starts MariaDB 10.11, Redis, RabbitMQ, OpenSearch 2, Mercure, a one-shot setup service, PHP-FPM, Pimcore workers and nginx.
 
+The development PHP memory limit is set to `1G`. Pimcore/Symfony cache warmup in `APP_ENV=dev` with debug enabled can exceed the upstream image's 256 MiB default.
+
 The setup is idempotent. Existing Git working copies are never pulled, reset or deleted automatically.
 
 ## GitHub and SSH

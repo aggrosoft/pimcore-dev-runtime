@@ -92,10 +92,15 @@ if [[ "$refresh" -eq 1 ]]; then
     printf '%s\n' 'Refreshing development Composer lock for local bundles...'
     run_composer update \
         "${packages[@]}" \
-        --with-dependencies \
+        --minimal-changes \
         --no-install \
         --no-scripts \
         --no-interaction
+
+    php /opt/aggro/verify-dev-composer-lock.php \
+        "$app_dir/composer.lock" \
+        "$app_dir/composer.dev.lock" \
+        "${packages[@]}"
 
     printf '%s' "$fingerprint" > "$state_file"
 fi

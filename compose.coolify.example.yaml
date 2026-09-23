@@ -2,6 +2,7 @@ x-pimcore-environment: &pimcore-environment
   APP_ENV: dev
   APP_DEBUG: "1"
   PIMCORE_DEV_MODE: "true"
+  PHP_MEMORY_LIMIT: "1G"
   PIMCORE_APP_BUNDLES: "1"
 
   APPLICATION_SECRET: ${SERVICE_BASE64_64_APP}
