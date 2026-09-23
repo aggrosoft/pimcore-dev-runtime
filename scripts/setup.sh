@@ -227,6 +227,9 @@ else
     )
 fi
 
+printf '%s\n' '==> Warming development container'
+run_console cache:warmup
+
 if (( pimcore_was_installed )); then
     printf '%s\n' '==> Checking legacy bundle installer state'
     (
