@@ -30,8 +30,10 @@ jobs:
           bash -n scripts/composer-wrapper.sh
           bash -n scripts/setup.sh
           php -l scripts/generate-dev-composer.php
+          php -l scripts/repair-bundle-installers.php
           php -l scripts/verify-dev-composer-lock.php
           php tests/generate-dev-composer-test.php
+          php tests/setup-order-test.php
 
   build:
     needs: validate
