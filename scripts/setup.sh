@@ -201,8 +201,13 @@ run_dev /opt/aggro/sync-app-composer.sh --install
 
 install -d -o developer -g www-data -m 0775 \
     "$app_dir/var" \
+    "$app_dir/var/classes" \
     "$app_dir/public/var"
 
+# Pimcore class definitions can be tracked in the application repository.
+# Keep them writable for setup commands running as the developer user.
+chown -R developer:www-data "$app_dir/var/classes"
+chmod -R ug+rwX "$app_dir/var/classes"
 chmod -R g+rwX "$app_dir/var" "$app_dir/public/var"
 
 if is_pimcore_installed; then
