@@ -49,7 +49,7 @@ ghcr.io/aggrosoft/pimcore-dev-runtime:main
 
 The image extends `pimcore/pimcore:php8.5-max-5.x` and adds only development plumbing:
 
-- a `developer` user for VS Code/SSHPiper
+- a `developer` user for remote development
 - GitHub App Git authentication
 - Node.js/npm for Studio frontend builds
 - Chromium for browser smoke tests
@@ -70,13 +70,12 @@ The setup is idempotent. Existing Git working copies are never pulled, reset or 
 
 ## GitHub and SSH
 
-Use the same project-shared GitHub App and SSHPiper key variables as the Shopware development template:
+Use the shared GitHub App values:
 
 ```text
 GITHUB_APP_CLIENT_ID
 GITHUB_APP_INSTALLATION_ID
 GITHUB_APP_PRIVATE_KEY
-SSH_AUTHORIZED_KEYS_B64
 ```
 
 For example:
@@ -85,12 +84,17 @@ For example:
 GITHUB_APP_CLIENT_ID={{project.GITHUB_APP_CLIENT_ID}}
 GITHUB_APP_INSTALLATION_ID={{project.GITHUB_APP_INSTALLATION_ID}}
 GITHUB_APP_PRIVATE_KEY={{project.GITHUB_APP_PRIVATE_KEY}}
-SSH_AUTHORIZED_KEYS_B64={{project.SSH_AUTHORIZED_KEYS_B64}}
 ```
 
 Keep the GitHub private key multiline.
 
-The PHP container uses SSHPiper Docker-exec mode, so no separate SSH daemon is required in the image.
+Remote access is handled centrally by `aggrosoft/coolify-ssh-bridge`. The PHP service sets:
+
+```text
+AGGRO_SSH_ENABLED=true
+```
+
+No SSHPiper labels or per-resource SSH key variables are required.
 
 ## Pimcore installation
 
