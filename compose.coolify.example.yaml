@@ -198,18 +198,10 @@ services:
     environment:
       <<: [*pimcore-environment, *dev-environment]
       SHELL: /bin/bash
+      AGGRO_SSH_ENABLED: "true"
     volumes:
       - pimcore_workspace:/var/www
       - pimcore_data:/var/data
-    labels:
-      - 'sshpiper.username=${SERVICE_FQDN_NGINX}'
-      - 'sshpiper.container_username=developer'
-      - 'sshpiper.port=22'
-      - 'sshpiper.network=${COMPOSE_PROJECT_NAME}'
-      - 'sshpiper.authorized_keys=${SSH_AUTHORIZED_KEYS_B64:-}'
-      - 'sshpiper.docker_exec_cmd=${SSH_AUTHORIZED_KEYS_B64:+true}'
-      - 'sshpiper.docker_sshd_cmd=/bin/bash'
-
   supervisord:
     image: pimcore/pimcore:php8.5-supervisord-5.x
     restart: unless-stopped
