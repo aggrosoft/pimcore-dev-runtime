@@ -243,6 +243,8 @@ services:
       - -lc
       - >-
         cp /var/www/html/.docker/nginx.conf /etc/nginx/conf.d/default.conf
+        && sed -i 's|client_max_body_size .*;|client_max_body_size 300M;|' /etc/nginx/conf.d/default.conf
+        && nginx -t
         && exec nginx -g 'daemon off;'
 
 volumes:
