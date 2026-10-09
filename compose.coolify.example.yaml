@@ -246,7 +246,8 @@ services:
       - /bin/sh
       - -lc
       - >-
-        cp /var/www/html/.docker/nginx.conf /etc/nginx/templates/default.conf.template
+        mkdir -p /etc/nginx/templates
+        && cp /var/www/html/.docker/nginx.conf /etc/nginx/templates/default.conf.template
         && exec /docker-entrypoint.sh nginx -g 'daemon off;'
 
 volumes:
