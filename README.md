@@ -64,6 +64,8 @@ Use `compose.coolify.example.yaml` as the Coolify Compose template.
 
 It starts MariaDB 10.11, Redis, RabbitMQ, OpenSearch 2, Mercure, a one-shot setup service, PHP-FPM, Pimcore workers and nginx.
 
+Mercure is pinned to `dunglas/mercure:v0.24.2` for Pimcore Studio 2026.2. Studio uses the Mercure 0.x subscription and JWT protocol; an unpinned image can pull a newer, incompatible hub. This runtime's Compose template controls the development services, independently of the Compose files in the `pimcore-app` workspace. Redeploy the Coolify resource after updating the template so the Mercure container is recreated with the pinned image.
+
 The development PHP memory limit is set to `1G`. Pimcore/Symfony cache warmup in `APP_ENV=dev` with debug enabled can exceed the upstream image's 256 MiB default.
 
 The setup is idempotent. Existing Git working copies are never pulled, reset or deleted automatically.

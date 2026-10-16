@@ -161,7 +161,8 @@ services:
       start_period: 30s
 
   mercure:
-    image: dunglas/mercure
+    # Studio 2026.2 uses the Mercure 0.x subscription and JWT protocol.
+    image: dunglas/mercure:v0.24.2
     restart: unless-stopped
     environment:
       SERVER_NAME: :80
